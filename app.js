@@ -87,6 +87,8 @@ function crashPopup(feature) {
 // 3. Create Crash Layer and Add to Map
 // =======================================
 
+console.log("typeof hk_risk_crash =", typeof hk_risk_crash);
+
 // hk_risk_crash comes from hk_risk_crash.js
 const crashLayer = L.geoJSON(hk_risk_crash, {
   style: crashRiskStyle,
@@ -98,3 +100,4 @@ const crashLayer = L.geoJSON(hk_risk_crash, {
 crashLayer.addTo(map);
 
 console.log("Crash risk layer loaded:", crashLayer);
+
