@@ -3,7 +3,7 @@
 // =======================================
 
 const map = L.map("map", {
-  center: [22.32, 114.17],  // Hong Kong
+  center: [22.32, 114.17],  // Hong Kong approx
   zoom: 12,
   minZoom: 10,
   maxZoom: 18
@@ -23,7 +23,7 @@ L.tileLayer(
 // 2. Crash Risk Helpers
 // =======================================
 
-// Risk color + label based on risk_class
+// Map risk_class -> color + label
 function getRiskInfo(riskClass) {
   switch (riskClass) {
     case 0:
@@ -43,7 +43,7 @@ function getRiskInfo(riskClass) {
   }
 }
 
-// Line style for crash layer
+// Style for crash risk lines
 function crashRiskStyle(feature) {
   const riskClass = feature.properties.risk_class;
   const riskInfo = getRiskInfo(riskClass);
@@ -55,29 +55,35 @@ function crashRiskStyle(feature) {
   };
 }
 
-// Basic popup (we will upgrade this later)
+// Simple popup for crash layer (we'll fancy this up later)
 function crashPopup(feature) {
   const p = feature.properties || {};
   const riskInfo = getRiskInfo(p.risk_class);
 
+  const streetEn = p.STREET_ENAME || "N/A";
+  const streetZh = p.STREET_CNAME || "";
+  const segmentId = p.OBJECTID ?? "";
+  const density = p["Crash Density_crash_density"];
+  const crashCount = p["Crash Density_crash_crash_count"];
+
+  const densityText =
+    density !== undefined && density !== null
+      ? density.toFixed(2) + " crashes/km"
+      : "N/A";
+
   return `
-    <div style="font-family:'Segoe UI',sans-serif; font-size:12px;">
-      <b>🚕 Road Segment ${p.OBJECTID ?? ""}</b><br>
-      <b>Street:</b> ${p.STREET_ENAME || "N/A"}<br>
-      <span style="color:#888;">${p.STREET_CNAME || ""}</span><br><br>
+    <div style="font-family:'Segoe UI',sans-serif;font-size:12px;">
+      <b>🚕 Road Segment ${segmentId}</b><br>
+      <b>Street:</b> ${streetEn}<br>
+      <span style="color:#888;">${streetZh}</span><br><br>
 
       <b>Risk level:</b>
-      <span style="color:${riskInfo.color}; font-weight:bold;">
+      <span style="color:${riskInfo.color};font-weight:bold;">
         ${riskInfo.label}
       </span><br>
 
-      <b>Crash density:</b> ${
-        p["Crash Density_crash_density"] !== undefined
-          ? p["Crash Density_crash_density"].toFixed(2)
-          : "N/A"
-      } crashes/km<br>
-
-      <b>Crash count:</b> ${p["Crash Density_crash_crash_count"] ?? "N/A"}
+      <b>Crash density:</b> ${densityText}<br>
+      <b>Crash count:</b> ${crashCount ?? "N/A"}
     </div>
   `;
 }
@@ -87,9 +93,9 @@ function crashPopup(feature) {
 // 3. Create Crash Layer and Add to Map
 // =======================================
 
+// Debug: check that the crash data variable exists
 console.log("typeof hk_risk_crash =", typeof hk_risk_crash);
 
-// hk_risk_crash comes from hk_risk_crash.js
 const crashLayer = L.geoJSON(hk_risk_crash, {
   style: crashRiskStyle,
   onEachFeature: function (feature, layer) {
@@ -100,4 +106,3 @@ const crashLayer = L.geoJSON(hk_risk_crash, {
 crashLayer.addTo(map);
 
 console.log("Crash risk layer loaded:", crashLayer);
-
